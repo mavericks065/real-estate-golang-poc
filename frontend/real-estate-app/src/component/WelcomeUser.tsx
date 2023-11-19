@@ -1,5 +1,6 @@
 import {User, UserManager} from "oidc-client-ts";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
+import {Outlet} from "react-router-dom";
 
 
 export default function WelcomeUser(props: { userManager: UserManager }) {
@@ -20,7 +21,9 @@ export default function WelcomeUser(props: { userManager: UserManager }) {
         <div>
             Hello {user?.profile.preferred_username ?? "Loading"}
             <br/>
-            <a href="/ads">Go see the ads</a>
+            <a href="/authenticated/ads">Go see the ads</a>
+
+            <Outlet/>
         </div>
     )
 }

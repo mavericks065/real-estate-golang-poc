@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import {createBrowserRouter, RouterProvider} from "react-router-dom";
+import {createBrowserRouter, redirect, RouterProvider} from "react-router-dom";
 import WelcomeUser from "./component/WelcomeUser";
 import Ads from "./component/Ads";
 import Unauthenticated from "./component/Unauthenticated";
@@ -42,6 +42,14 @@ const userManager = new UserManager({
     // },
 });
 
+async function loadUser() {
+    const user = await userManager.getUser();
+    if (user === null) {
+        redirect("/");
+    }
+    return user;
+}
+
 const router = createBrowserRouter([
     {
         path: "/",
@@ -52,12 +60,16 @@ const router = createBrowserRouter([
                 element: <Unauthenticated userManager={userManager} />,
             },
             {
-                path: "/authenticated",
+                path: "authenticated",
                 element: <WelcomeUser userManager={userManager} />,
-            },
-            {
-                path: "/ads",
-                element: <Ads />,
+                // loader: loadUser,
+                children: [
+                    {
+                        path: "ads",
+                        element: <Ads />,
+                        loader: loadUser,
+                    }
+                ]
             },
         ]
     },

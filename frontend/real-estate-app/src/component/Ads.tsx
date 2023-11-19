@@ -1,4 +1,6 @@
 import React, {useEffect, useState} from "react";
+import {User} from "oidc-client-ts";
+import {useLoaderData} from "react-router-dom";
 
 
 interface Ads {
@@ -11,9 +13,17 @@ interface Ads {
 
 export default function Ads() {
     const [data, setData] = useState<Ads | undefined>();
+    const user = useLoaderData() as User;
+    console.log("Loaded data", user);
 
+    const token = "alskdnbsalkdns"
     useEffect(() => {
-        fetch("http://localhost:9000/api/ads").then(async response => {
+        fetch("http://localhost:9000/api/ads", {
+            headers: {
+                // mode: "no-cors",
+                Authorization: user.access_token,
+            }
+        }).then(async response => {
             const results = await response.json();
             setData(results);
         })
