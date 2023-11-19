@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import './App.css';
+import { UserManager } from 'oidc-client-ts';
 
 
 interface Ads {
@@ -10,6 +11,19 @@ interface Ads {
 }
 
 function App() {
+  const userManager = new UserManager({
+    authority: "http://localhost:8080",
+    client_id: "",
+    client_secret: "",
+    redirect_uri: "/callback",
+  });
+
+  useEffect(() => {
+    userManager.getUser().then(user => {
+      console.log(user);
+    })
+  }, [])
+
   const [data, setData] = useState<Ads | undefined>();
 
   useEffect(() => {
@@ -18,7 +32,6 @@ function App() {
       setData(results);
     })
   }, []);
-
 
   return (
     <div className="App">
