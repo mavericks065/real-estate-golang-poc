@@ -9,7 +9,9 @@ func main() {
 	r := gin.Default()
 
 	r.GET("/", controllers.HelloWorld)
-	r.GET("/ads", controllers.FindAds)
+
+	protected := r.Group("/api")
+	protected.GET("/ads", controllers.FindAds)
 
 	err := r.Run()
 	if err != nil {
