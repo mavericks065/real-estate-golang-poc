@@ -12,6 +12,11 @@ import (
 	"time"
 )
 
+type MyCustomClaims struct {
+	Scope string `json:"scope"`
+	jwt.RegisteredClaims
+}
+
 func AccessAdsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		content, exists := c.Get("claims")
