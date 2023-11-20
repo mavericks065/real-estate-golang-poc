@@ -9,7 +9,7 @@ export default function WelcomeUser(props: { userManager: UserManager }) {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
-        userManager.getUser().then(userInfo => {
+        userManager.signinCallback().then(userInfo => {
             setUser(userInfo as User)
             console.log(userInfo);
         }).catch(err => {

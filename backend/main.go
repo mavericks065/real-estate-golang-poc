@@ -6,22 +6,62 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"log"
+	"net/http"
 	"real-estate-golang-poc.com/V0/controllers"
 	"strings"
 	"time"
 )
 
-func AuthMiddleware(verifier func(token string) bool) gin.HandlerFunc {
+func AccessAdsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.Request.Header.Get("Authorization")
-		fmt.Println(token)
-
-		isValid := verifier(strings.Trim(token, " "))
-		log.Printf("iSvalid %v", isValid)
-		if !isValid {
+		content, exists := c.Get("claims")
+		if !exists {
+			fmt.Println("Oops, context wasn't properly set")
 			return
 		}
 
+		claims, valid := content.(MyCustomClaims)
+		if !valid {
+			fmt.Println("Oops, token isn't good")
+			return
+		}
+		scope := claims.Scope
+		fmt.Println(scope)
+		if !strings.Contains(scope, "read:ads") {
+			fmt.Println("Oops, forbidden")
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+		c.Next()
+	}
+}
+
+func AuthMiddleware(verifier func(token string) (*jwt.Token, MyCustomClaims, error)) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.Request.Method == "OPTIONS" {
+
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+			c.Writer.Header().Set("Access-Control-Allow-Headers", "Mode, Authorization, User-Agent, Dnt, Referer, Sec-Ch-Ua, Sec-Ch-Ua-Mobile, Sec-Ch-Ua-Platform")
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
+		rawToken := c.Request.Header.Get("Authorization")
+		fmt.Println(rawToken)
+
+		token, claims, err := verifier(strings.Trim(rawToken, " "))
+		if err != nil {
+			fmt.Println(err)
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		log.Printf("iSvalid %v", token.Valid)
+		if !token.Valid {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		c.Set("token", token)
+		c.Set("claims", claims)
 		c.Next()
 	}
 }
@@ -29,12 +69,6 @@ func AuthMiddleware(verifier func(token string) bool) gin.HandlerFunc {
 func main() {
 	jwksURL := "http://localhost:8080/realms/Real-Estate/protocol/openid-connect/certs"
 
-	// Create a context that, when cancelled, ends the JWKS background refresh goroutine.
-	//ctx, cancel := context.WithCancel(context.Background())
-
-	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKS when a JWT signed by an unknown KID
-	// is found or at the specified interval. Rate limit these refreshes. Timeout the initial JWKS refresh request after
-	// 10 seconds. This timeout is also used to create the initial context.Context for keyfunc.Get.
 	options := keyfunc.Options{
 		//Ctx: ,
 		RefreshErrorHandler: func(err error) {
@@ -52,32 +86,11 @@ func main() {
 		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %v", err)
 	}
 
-	verify := func(rawToken string) bool {
-		token, err := jwt.Parse(rawToken, jwks.Keyfunc)
-		if err != nil {
-			log.Printf("Failed to parse the JWT.\nError: %v", err)
-			return false
-		}
-		return token.Valid
+	verify := func(rawToken string) (*jwt.Token, MyCustomClaims, error) {
+		var customClaims MyCustomClaims
+		token, err := jwt.ParseWithClaims(rawToken, &customClaims, jwks.Keyfunc)
+		return token, customClaims, err
 	}
-	// Parse the JWT.
-	//token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
-	//if err != nil {
-	//	log.Fatalf("Failed to parse the JWT.\nError: %v", err)
-	//}
-	//
-	//// Check if the token is valid.
-	//if !token.Valid {
-	//	log.Fatalf("The token is not valid.")
-	//}
-	//log.Println("The token is valid.")
-
-	// End the background refresh goroutine when it's no longer needed.
-	//cancel()
-
-	// This will be ineffectual because the line above this canceled the parent context.Context.
-	// This method call is idempotent similar to context.CancelFunc.
-	//jwks.EndBackground()
 
 	r := gin.Default()
 
@@ -85,6 +98,7 @@ func main() {
 
 	protected := r.Group("/api")
 	protected.Use(AuthMiddleware(verify))
+	protected.Use(AccessAdsMiddleware())
 	protected.GET("/ads", controllers.FindAds)
 	protected.OPTIONS("/ads", controllers.FindAds)
 

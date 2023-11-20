@@ -22,24 +22,7 @@ const userManager = new UserManager({
     redirect_uri: "http://localhost:3000/authenticated",
     response_mode: "query",
     response_type: "code",
-    // stateStore: new InMemoryWebStorage(),
-    // @ts-ignore
-    // stateStore: {
-    //     get(key: string): Promise<string | null> {
-    //         return Promise.resolve(store.getItem(key))
-    //     },
-    //     set(key: string,  value: string): Promise<void> {
-    //         store.setItem(key,  value);
-    //         return Promise.resolve()
-    //     },
-    //     remove(key: string): Promise<string | null> {
-    //         store.removeItem(key)
-    //         return Promise.resolve(null);
-    //     },
-    //     getAllKeys(): Promise<string[]> {
-    //         throw new Error("Not implemented")
-    //     },
-    // },
+    scope: "openid profile offline_access email roles"
 });
 
 async function loadUser() {

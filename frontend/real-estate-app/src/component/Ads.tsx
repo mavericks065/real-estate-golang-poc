@@ -16,11 +16,9 @@ export default function Ads() {
     const user = useLoaderData() as User;
     console.log("Loaded data", user);
 
-    const token = "alskdnbsalkdns"
     useEffect(() => {
         fetch("http://localhost:9000/api/ads", {
             headers: {
-                // mode: "no-cors",
                 Authorization: user.access_token,
             }
         }).then(async response => {
