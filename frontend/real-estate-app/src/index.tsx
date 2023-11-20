@@ -7,13 +7,11 @@ import {createBrowserRouter, redirect, RouterProvider} from "react-router-dom";
 import WelcomeUser from "./component/WelcomeUser";
 import Ads from "./component/Ads";
 import Unauthenticated from "./component/Unauthenticated";
-import {InMemoryWebStorage, UserManager} from "oidc-client-ts";
+import {UserManager} from "oidc-client-ts";
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
-
-const store = new InMemoryWebStorage();
 
 const userManager = new UserManager({
     authority: "http://localhost:8080/realms/Real-Estate/",
